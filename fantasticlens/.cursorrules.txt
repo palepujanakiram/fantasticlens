@@ -1,0 +1,14 @@
+
+We would like to build a Photo booth like application using Flutter. 
+This app will allow user to choose the photo template style. 
+Each template style would capture the number of photos based on its configuration and theme.
+Once the template is chosen then it will take to new screen which will take Photos based on template and then we will send this photo our backend for processing with AI.
+Once API return the new Photo and we will display the new photo. Final Photo will be shown on the screen and also provide options to send to Whatsapp number and Printer.
+
+Supported Platforms : This project will run on both Phones and Tablets both iOS and Android.
+
+Project Architecture: This project will use Clean Architecture.
+
+Coding Style : Dart Style Guide Adherence ( Naming Conventions, Trailing Commas, Line Length ),
+
+Best Practices: "Flutter-Specific Best Practices ( Widget Structure , State Management, Immutability, Theming and Styling, Code Organization, Null Safety, Meaningful Naming, )", "Always use Flutter Coding guidelines," "Handle errors explicitly with specific exception types."

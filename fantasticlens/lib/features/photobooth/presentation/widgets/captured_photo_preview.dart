@@ -60,6 +60,17 @@ class CapturedPhotoPreview extends StatelessWidget {
                 ],
               ),
             )
+          else if (photo!.imageBytes != null)
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Image.memory(
+                  photo!.imageBytes!,
+                  fit: BoxFit.cover,
+                  gaplessPlayback: true,
+                ),
+              ),
+            )
           else
             Positioned.fill(
               child: DecoratedBox(

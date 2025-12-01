@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../domain/entities/camera_device.dart';
 import '../../domain/entities/captured_photo.dart';
 import '../../domain/entities/photo_template.dart';
 import '../../domain/entities/processed_photo.dart';
@@ -22,6 +23,11 @@ class PhotoBoothState extends Equatable {
     this.processedPhoto,
     this.errorMessage,
     this.isCaptureInProgress = false,
+    this.availableCameras = const [],
+    this.activeCamera,
+    this.isCameraLoading = false,
+    this.isCameraReady = false,
+    this.cameraError,
   });
 
   final PhotoBoothStatus status;
@@ -30,6 +36,11 @@ class PhotoBoothState extends Equatable {
   final ProcessedPhoto? processedPhoto;
   final String? errorMessage;
   final bool isCaptureInProgress;
+  final List<CameraDevice> availableCameras;
+  final CameraDevice? activeCamera;
+  final bool isCameraLoading;
+  final bool isCameraReady;
+  final String? cameraError;
 
   bool get hasTemplate => selectedTemplate != null;
 
@@ -51,6 +62,8 @@ class PhotoBoothState extends Equatable {
         status != PhotoBoothStatus.processing;
   }
 
+  bool get hasCameraSelected => activeCamera != null;
+
   PhotoBoothState copyWith({
     PhotoBoothStatus? status,
     PhotoTemplate? selectedTemplate,
@@ -60,6 +73,13 @@ class PhotoBoothState extends Equatable {
     bool? isCaptureInProgress,
     bool clearProcessedPhoto = false,
     bool clearError = false,
+    List<CameraDevice>? availableCameras,
+    CameraDevice? activeCamera,
+    bool? isCameraLoading,
+    bool? isCameraReady,
+    String? cameraError,
+    bool clearCameraError = false,
+    bool clearActiveCamera = false,
   }) {
     return PhotoBoothState(
       status: status ?? this.status,
@@ -70,6 +90,12 @@ class PhotoBoothState extends Equatable {
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
       isCaptureInProgress:
           isCaptureInProgress ?? this.isCaptureInProgress,
+      availableCameras: availableCameras ?? this.availableCameras,
+      activeCamera:
+          clearActiveCamera ? null : activeCamera ?? this.activeCamera,
+      isCameraLoading: isCameraLoading ?? this.isCameraLoading,
+      isCameraReady: isCameraReady ?? this.isCameraReady,
+      cameraError: clearCameraError ? null : cameraError ?? this.cameraError,
     );
   }
 
@@ -81,6 +107,11 @@ class PhotoBoothState extends Equatable {
         processedPhoto,
         errorMessage,
         isCaptureInProgress,
+        availableCameras,
+        activeCamera,
+        isCameraLoading,
+        isCameraReady,
+        cameraError,
       ];
 }
 

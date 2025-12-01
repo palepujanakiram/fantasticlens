@@ -1,3 +1,4 @@
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -19,6 +20,15 @@ class CaptureSessionPage extends ConsumerStatefulWidget {
 
 class _CaptureSessionPageState extends ConsumerState<CaptureSessionPage> {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(photoBoothControllerProvider.notifier)
+          .prepareCameraForSession();
+    });
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final template = ref.read(photoBoothControllerProvider).selectedTemplate;
@@ -34,6 +44,7 @@ class _CaptureSessionPageState extends ConsumerState<CaptureSessionPage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(photoBoothControllerProvider);
+    final cameraManager = ref.watch(cameraManagerProvider);
     final template = state.selectedTemplate;
 
     if (template == null) {
@@ -57,7 +68,7 @@ class _CaptureSessionPageState extends ConsumerState<CaptureSessionPage> {
         actions: [
           TextButton(
             onPressed: () {
-              controller.resetSession();
+              controller.resetSession(preserveCamera: true);
               Navigator.of(context)
                   .popUntil((route) => route.isFirst);
             },
@@ -109,6 +120,13 @@ class _CaptureSessionPageState extends ConsumerState<CaptureSessionPage> {
                     ],
                   ),
                 ),
+              ),
+              const SizedBox(height: AppSizes.lg),
+              _CameraPreviewSection(
+                controller: cameraManager.controller,
+                isInitialized: cameraManager.isInitialized,
+                isLoading: state.isCameraLoading,
+                cameraError: state.cameraError,
               ),
               const SizedBox(height: AppSizes.lg),
               CaptureProgressIndicator(
@@ -208,6 +226,128 @@ class _CaptureSessionPageState extends ConsumerState<CaptureSessionPage> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _CameraPreviewSection extends StatelessWidget {
+  const _CameraPreviewSection({
+    required this.controller,
+    required this.isInitialized,
+    required this.isLoading,
+    this.cameraError,
+  });
+
+  final CameraController? controller;
+  final bool isInitialized;
+  final bool isLoading;
+  final String? cameraError;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final bool canShowPreview =
+        controller != null && isInitialized && !isLoading;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AspectRatio(
+          aspectRatio: 16 / 9,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          theme.colorScheme.surfaceVariant,
+                          theme.colorScheme.surface,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                  ),
+                ),
+                if (canShowPreview)
+                  Positioned.fill(child: CameraPreview(controller!))
+                else
+                  Positioned.fill(
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.videocam,
+                            size: 48,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(height: AppSizes.sm),
+                          Text(
+                            isLoading
+                                ? 'Initializing camera...'
+                                : 'Camera preview not available yet.',
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                if (isLoading)
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color:
+                            theme.colorScheme.surface.withOpacity(0.45),
+                      ),
+                      child: const Center(
+                        child: SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: CircularProgressIndicator(),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSizes.sm),
+        Row(
+          children: [
+            Icon(
+              canShowPreview ? Icons.check_circle : Icons.warning_amber,
+              size: 18,
+              color: canShowPreview
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.secondary,
+            ),
+            const SizedBox(width: AppSizes.xs),
+            Text(
+              canShowPreview
+                  ? 'Camera ready'
+                  : isLoading
+                      ? 'Preparing camera'
+                      : 'Check camera connection',
+              style: theme.textTheme.labelMedium,
+            ),
+          ],
+        ),
+        if (cameraError != null) ...[
+          const SizedBox(height: AppSizes.sm),
+          Text(
+            cameraError!,
+            style: TextStyle(
+              color: theme.colorScheme.error,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

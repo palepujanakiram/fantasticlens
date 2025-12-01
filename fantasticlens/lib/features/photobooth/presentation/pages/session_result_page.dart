@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -36,7 +38,7 @@ class SessionResultPage extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () {
-              controller.resetSession();
+              controller.resetSession(preserveCamera: true);
               Navigator.of(context)
                   .popUntil((route) => route.isFirst);
             },
@@ -62,6 +64,7 @@ class SessionResultPage extends ConsumerWidget {
             _ProcessedPhotoPreview(
               placeholderColor: processedPhoto.placeholderColor,
               templateName: template.name,
+              imageBytes: processedPhoto.imageBytes,
             ),
             const SizedBox(height: AppSizes.lg),
             Text(
@@ -118,7 +121,7 @@ class SessionResultPage extends ConsumerWidget {
             const SizedBox(height: AppSizes.lg),
             OutlinedButton.icon(
               onPressed: () {
-                controller.resetSession();
+                controller.resetSession(preserveCamera: true);
                 Navigator.of(context).pushNamedAndRemoveUntil(
                   AppRoutes.templates,
                   (route) => false,
@@ -144,10 +147,12 @@ class _ProcessedPhotoPreview extends StatelessWidget {
   const _ProcessedPhotoPreview({
     required this.placeholderColor,
     required this.templateName,
+    this.imageBytes,
   });
 
   final int placeholderColor;
   final String templateName;
+  final Uint8List? imageBytes;
 
   @override
   Widget build(BuildContext context) {
@@ -159,21 +164,32 @@ class _ProcessedPhotoPreview extends StatelessWidget {
         height: 360,
         child: Stack(
           children: [
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      baseColor.withOpacity(0.9),
-                      baseColor.withOpacity(0.7),
-                      baseColor.withOpacity(0.5),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+            if (imageBytes != null)
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.memory(
+                    imageBytes!,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              )
+            else
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        baseColor.withOpacity(0.9),
+                        baseColor.withOpacity(0.7),
+                        baseColor.withOpacity(0.5),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                   ),
                 ),
               ),
-            ),
             Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,

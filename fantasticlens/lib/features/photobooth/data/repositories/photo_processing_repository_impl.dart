@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import '../../domain/entities/captured_photo.dart';
 import '../../domain/entities/photo_template.dart';
@@ -27,11 +28,16 @@ class PhotoProcessingRepositoryImpl implements PhotoProcessingRepository {
       capturedPhotos.map((photo) => photo.placeholderColor).toList(),
     );
 
+    final Uint8List? previewBytes = capturedPhotos.reversed
+        .map((photo) => photo.imageBytes)
+        .firstWhere((bytes) => bytes != null, orElse: () => null);
+
     return ProcessedPhoto(
       sessionId:
           '${template.id}_${capturedPhotos.first.capturedAt.millisecondsSinceEpoch}',
       placeholderColor: blendedColor,
       processedAt: DateTime.now(),
+      imageBytes: previewBytes,
     );
   }
 

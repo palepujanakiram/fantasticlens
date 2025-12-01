@@ -1,31 +1,99 @@
-import 'dart:async';
+import 'dart:typed_data';
 
+import '../../domain/entities/camera_device.dart';
 import '../../domain/entities/captured_photo.dart';
 import '../../domain/entities/photo_template.dart';
 import '../../domain/repositories/photo_capture_repository.dart';
+import '../services/camera_manager.dart';
 
 class PhotoCaptureRepositoryImpl implements PhotoCaptureRepository {
   PhotoCaptureRepositoryImpl({
-    this.simulatedCaptureDelay = const Duration(milliseconds: 700),
-  });
+    required CameraManager cameraManager,
+  }) : _cameraManager = cameraManager;
 
-  final Duration simulatedCaptureDelay;
+  final CameraManager _cameraManager;
+
+  @override
+  Future<List<CameraDevice>> loadAvailableCameras() async {
+    return _cameraManager.loadAvailableCameras();
+  }
+
+  @override
+  Future<CameraDevice?> getSelectedCamera() async {
+    if (_cameraManager.selectedDevice != null) {
+      return _cameraManager.selectedDevice;
+    }
+    final devices = await loadAvailableCameras();
+    if (devices.isEmpty) {
+      return null;
+    }
+    await selectCamera(devices.first);
+    return devices.first;
+  }
+
+  @override
+  Future<void> selectCamera(CameraDevice device) async {
+    await _cameraManager.selectCamera(device);
+  }
+
+  @override
+  Future<void> prepareSelectedCamera() {
+    return _cameraManager.ensureCameraInitialized();
+  }
+
+  @override
+  bool get isCameraReady => _cameraManager.isInitialized;
 
   @override
   Future<CapturedPhoto> capturePhoto({
     required PhotoTemplate template,
     required int index,
   }) async {
-    await Future<void>.delayed(simulatedCaptureDelay);
+    await prepareSelectedCamera();
+    final Uint8List bytes = await _cameraManager.capturePhotoBytes();
 
-    final int color = _colorForIndex(template, index);
+    final int placeholderColor = _dominantColorFromBytes(
+      bytes,
+      fallback: _colorForIndex(template, index),
+    );
 
     return CapturedPhoto(
       id: '${template.id}_$index',
       index: index,
       capturedAt: DateTime.now(),
-      placeholderColor: color,
+      placeholderColor: placeholderColor,
+      imageBytes: bytes,
     );
+  }
+
+  @override
+  Future<void> dispose() {
+    return _cameraManager.disposeCamera();
+  }
+
+  int _dominantColorFromBytes(
+    Uint8List bytes, {
+    required int fallback,
+  }) {
+    if (bytes.isEmpty) {
+      return fallback;
+    }
+    final List<int> sample = bytes.length > 5000
+        ? bytes.sublist(0, 5000)
+        : bytes;
+    int red = 0;
+    int green = 0;
+    int blue = 0;
+    for (int i = 0; i < sample.length - 3; i += 4) {
+      red += sample[i];
+      green += sample[i + 1];
+      blue += sample[i + 2];
+    }
+    final int count = (sample.length / 4).floor().clamp(1, sample.length);
+    final int avgRed = (red / count).clamp(0, 255).toInt();
+    final int avgGreen = (green / count).clamp(0, 255).toInt();
+    final int avgBlue = (blue / count).clamp(0, 255).toInt();
+    return (0xFF << 24) | (avgRed << 16) | (avgGreen << 8) | avgBlue;
   }
 
   int _colorForIndex(PhotoTemplate template, int index) {
@@ -53,4 +121,3 @@ class PhotoCaptureRepositoryImpl implements PhotoCaptureRepository {
         apply(blue);
   }
 }
-

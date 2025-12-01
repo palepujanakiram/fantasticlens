@@ -64,13 +64,11 @@ class CameraManager extends ChangeNotifier {
       }
       if (_availableDescriptions.isEmpty) {
         _selectedDescription = null;
-      } else if (_selectedDescription == null) {
-        _selectedDescription = _availableDescriptions.firstWhere(
+      } else _selectedDescription ??= _availableDescriptions.firstWhere(
           (description) =>
               description.lensDirection == CameraLensDirection.front,
           orElse: () => _availableDescriptions.first,
         );
-      }
       notifyListeners();
       return availableDevices;
     } on CameraException catch (error) {

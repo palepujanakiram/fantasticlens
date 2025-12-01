@@ -263,7 +263,7 @@ class _CameraPreviewSection extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          theme.colorScheme.surfaceVariant,
+                          theme.colorScheme.surfaceContainerHighest,
                           theme.colorScheme.surface,
                         ],
                         begin: Alignment.topLeft,

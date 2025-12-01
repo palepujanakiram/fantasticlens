@@ -20,7 +20,7 @@ class CapturedPhotoPreview extends StatelessWidget {
 
     final Color backgroundColor = isCaptured
         ? Color(photo!.placeholderColor)
-        : theme.colorScheme.surfaceVariant;
+        : theme.colorScheme.surfaceContainerHighest;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
